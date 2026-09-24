@@ -482,11 +482,15 @@ Values AugmentedLagrangianOptimizer::optimize() const {
     std::tie(state, muEq, muIneq) = iterate(previousState, muEq, muIneq);
 
     if (p_->updatePolicy == AugmentedLagrangianUpdatePolicy::BCL) {
-      state.converged = state.innerConverged &&
-                        state.augmentedLagrangianStationarity <=
-                            p_->absoluteStationarityTolerance &&
-                        state.generalizedConstraintViolation <=
-                            p_->absoluteViolationTolerance;
+      // Inner convergence describes whether LM met the current BCL
+      // subproblem schedule. The final KKT residuals can meet their declared
+      // absolute tolerances even when that schedule has tightened further
+      // than the required solution accuracy.
+      state.converged =
+          state.augmentedLagrangianStationarity <=
+              p_->absoluteStationarityTolerance &&
+          state.generalizedConstraintViolation <=
+              p_->absoluteViolationTolerance;
     } else {
       state.converged = AggressiveConverged(state, previousState, *p_);
     }
